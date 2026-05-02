@@ -6,11 +6,12 @@ from fpdf import FPDF
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="S.I.V. - Bloque 3: Víctima", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. CLASE GENERADORA DE PDF (TÍTULO SOLICITADO) ---
+# --- 2. CLASE GENERADORA DE PDF (ACTUALIZADA CON NUEVO TÍTULO) ---
 class ActaPDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 14)
-        self.cell(0, 10, 'ACTA DE PROCEDIMIENTOS', 0, 1, 'C')
+        # Título actualizado según tu requerimiento
+        self.cell(0, 10, 'ACTA DE ENTREVISTA', 0, 1, 'C') 
         self.ln(5)
 
     def crear_cuadros(self, d, relato):
@@ -57,17 +58,19 @@ def detectar_protocolos(texto):
     return p
 
 # --- 4. INTERFAZ ---
-st.title("🚔 S.I.V. - Bloque 3: Entrevista a Víctima")
-st.caption("Autor: CASTAÑEDA Luciano")
+# Título en interfaz actualizado
+st.title("🚔 S.I.V. - Bloque 3: ACTA DE ENTREVISTA")
+# Autoría actualizada según tu pedido
+st.caption("Autor: Sub Comisario CASTAÑEDA Juan") 
 
 with st.sidebar:
     st.header("Oficial Interviniente")
     oficial = st.text_input("Rango y Nombre", value="SUB COMISARIO CASTAÑEDA JUAN")
     st.divider()
-    lugar = st.text_input("Lugar del Hecho", placeholder="AV. PELLEGRINI 1200, ROSARIO").upper()
+    lugar = st.text_input("Lugar del Hecho", placeholder="EJ: CALLE SALTA 1200, ROSARIO").upper()
     hora = st.text_input("Hora del Hecho", placeholder="HH:MM")
 
-# 1. DATOS FILIATORIOS
+# SECCIÓN 1: Identidad
 with st.expander("🆔 1. DATOS FILIATORIOS", expanded=True):
     c1, c2, c3 = st.columns(3)
     nombre = c1.text_input("Apellido y Nombres").upper()
@@ -82,26 +85,20 @@ with st.expander("🆔 1. DATOS FILIATORIOS", expanded=True):
     domicilio = st.text_input("Domicilio Real").upper()
     edad_calc = calcular_edad(fecha_nac)
 
-# 2. RELATO Y DETECCIÓN
+# SECCIÓN 2: Relato y Lógica de Instancia
 st.subheader("✍️ 2. Relato del Hecho")
 relato_crudo = st.text_area("Ingrese el relato espontáneo:", height=150)
 
 if relato_crudo:
     protocolos = detectar_protocolos(relato_crudo)
-    
-    # LÓGICA DE INSTANCIA PENAL (TU CRITERIO TÉCNICO)
     hay_lesiones = "LESIONES" in protocolos
     
     if protocolos:
         st.warning(f"⚠️ **AVISO AL SUMARIANTE:** Se detectaron elementos de: {', '.join(protocolos)}")
-        if hay_lesiones:
-            st.error("❗ **ATENCIÓN:** Se detectaron posibles LESIONES. Por Art. 72 CP, DEBE preguntar si insta la acción penal.")
-
-    # Siempre habilitar la opción de Instancia Penal
+        
     col_p, col_q = st.columns(2)
     with col_p:
         insta = st.checkbox("¿Insta Acción Penal? (Art. 72 CP)", value=True if hay_lesiones else False)
-        st.caption("Recomendado si hay lesiones comprobadas para asegurar la procesabilidad.")
     with col_q:
         temor = st.checkbox("¿Manifiesta Temor por su integridad?")
 
@@ -115,23 +112,29 @@ if relato_crudo:
     
     with col_in:
         st.info("📂 **PASO 1: PROCESAR CON IA**")
-        prompt_ia = (f"Actuá como oficial escribiente. Redactá esta declaración en primera persona. "
-                     f"Empezá con: {filiacion_tecnica}. Luego integrá: {relato_crudo}. ")
-        if insta: prompt_ia += "Debe constar expresamente que insta la acción penal por las lesiones. "
-        if temor: prompt_ia += "Debe constar que siente un temor real por su vida. "
-        st.text_area("Prompt para copiar:", value=prompt_ia, height=250)
+        prompt_ia = (
+            "Actuá como oficial escribiente. Redactá esta declaración en primera persona del singular. "
+            "Usá un lenguaje llano y cotidiano, como el de un ciudadano común, sin tecnicismos legales. "
+            f"Empezá con: {filiacion_tecnica}. "
+            f"Integrá este relato: {relato_crudo}. "
+        )
+        
+        if insta:
+            prompt_ia += "Al final, agregá: 'Y con respecto a las lesiones que sufrí provocadas por esta persona, es mi deseo instar la acción penal'."
+        if temor:
+            prompt_ia += " Dejá constancia de que la víctima siente un miedo real por su vida."
+
+        st.text_area("Copie este prompt:", value=prompt_ia, height=250)
 
     with col_out:
         st.success("📂 **PASO 2: REVISIÓN DEL SUMARIANTE**")
-        st.caption("La IA redactó esto, pero USTED decide la forma final:")
-        acta_final = st.text_area("Texto final (Editable):", height=250)
+        acta_final = st.text_area("Texto final (Totalmente Editable):", height=250)
         
         if acta_final:
-            # BOTÓN DE EXPORTACIÓN COHERENTE
             datos_json = {
                 "bloque": "3",
                 "filiacion": filiacion_tecnica,
-                "relato_final": acta_final, 
+                "relato_final": acta_final,
                 "insta_accion": insta,
                 "dni": dni,
                 "oficial": oficial
@@ -153,5 +156,5 @@ if relato_crudo:
                     "ocupacion": ocupacion, "tel": telefono, "email": email
                 }
                 pdf = ActaPDF(); pdf.add_page(); pdf.crear_cuadros(d_pdf, acta_final)
-                pdf.output(f"ACTA_{dni}.pdf")
-                st.success("PDF generado exitosamente.")
+                pdf.output(f"ACTA_ENTREVISTA_{dni}.pdf") # Nombre de archivo actualizado
+                st.success("PDF generado con éxito.")
