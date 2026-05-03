@@ -10,10 +10,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- SIDEBAR (IGUAL AL BLOQUE 4 PARA COHERENCIA) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("Oficial Interviniente")
-    # CORRECCIÓN: Editable para que otros oficiales puedan usarlo
     interviniente = st.text_input(
         "Rango y Nombre",
         value="SUB COMISARIO CASTAÑEDA JUAN",
@@ -21,12 +20,11 @@ with st.sidebar:
     )
     st.markdown("---")
     st.subheader("Lugar del Hecho")
-    lugar = st.text_input("Dirección", value="PAYSANDU Y BRANDSEN, ZAVALLA")
+    lugar = st.text_input("Dirección", placeholder="EJ: CALLE BRANDSEN 123, ZAVALLA")
     st.subheader("Hora del Hecho")
     hora_hecho = st.text_input("HH:MM", value=datetime.now().strftime("%H:%M"))
 
 def limpiar_texto_pdf(texto):
-    """Limpia caracteres especiales para evitar errores en FPDF"""
     if texto is None: return ""
     reemplazos = {
         "“": '"', "”": '"', "‘": "'", "’": "'", "°": "Nro.",
@@ -39,14 +37,12 @@ def limpiar_texto_pdf(texto):
     return texto
 
 def generar_pdf_victima_bytes(datos, interviniente, lugar, hora):
-    """Genera el PDF con la misma estética que el Bloque 4"""
     pdf = FPDF(orientation='P', unit='mm', format='A4')
-    # Margen izquierdo de 25mm para el cosido de expediente
     pdf.set_margins(left=25, top=20, right=15)
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
 
-    # --- ENCABEZADO FORMAL ---
+    # --- ENCABEZADO ---
     pdf.set_font("Arial", "B", 8)
     pdf.cell(0, 4, "POLICIA DE LA PROVINCIA", ln=True, align="L")
     pdf.cell(0, 4, "UNIDAD REGIONAL II - ROSARIO", ln=True, align="L")
@@ -57,7 +53,6 @@ def generar_pdf_victima_bytes(datos, interviniente, lugar, hora):
     pdf.cell(0, 10, "ACTA DE DECLARACION DE VICTIMA", ln=True, align="C")
     pdf.ln(5)
 
-    # Introducción formal
     pdf.set_font("Arial", "", 11)
     pdf.multi_cell(0, 7, limpiar_texto_pdf(
         f"En la localidad de Zavalla, a los {datetime.now().strftime('%d')} dias del mes de "
@@ -66,7 +61,7 @@ def generar_pdf_victima_bytes(datos, interviniente, lugar, hora):
     ))
     pdf.ln(5)
 
-    # --- FILIACIÓN (RECUADRO ESTÉTICO) ---
+    # --- FILIACIÓN ---
     pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 8, "I. DATOS FILIATORIOS DEL DENUNCIANTE:", ln=True)
     pdf.set_font("Arial", "", 11)
@@ -78,11 +73,10 @@ def generar_pdf_victima_bytes(datos, interviniente, lugar, hora):
     pdf.multi_cell(0, 7, limpiar_texto_pdf(f"Domicilio Real: {f['domicilio']}"), 1)
     pdf.ln(8)
 
-    # --- RELATO (DOBLE INTERLINEADO) ---
+    # --- RELATO ---
     pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 8, "II. RELATO DE LOS HECHOS:", ln=True)
     pdf.set_font("Arial", "", 11)
-    # Interlineado de 10 para que sea "aireado" y profesional
     pdf.multi_cell(0, 10, limpiar_texto_pdf(datos["contenido"]), 0, 'J')
 
     # --- FIRMAS ---
@@ -100,7 +94,6 @@ def main():
     st.caption("Autor: Sub Comisario CASTAÑEDA Juan")
     st.markdown("---")
 
-    # Formulario de Víctima
     with st.expander("👤 DATOS FILIATORIOS DE LA VÍCTIMA", expanded=True):
         c1, c2, c3 = st.columns([2, 1, 1])
         nombre = c1.text_input("Apellido y Nombres").upper()
@@ -109,41 +102,38 @@ def main():
         
         c4, c5, c6 = st.columns([1, 1, 1])
         ocupacion = c4.text_input("Ocupación").upper()
-        # CORRECCIÓN: Sin límite de años y formato Argentino
-        fecha_nac = c5.date_input(
-            "Fecha de Nacimiento",
-            value=None,
-            min_value=datetime(1920, 1, 1),
-            max_value=datetime.now(),
-            format="DD/MM/YYYY"
-        )
+        fecha_nac = c5.date_input("Fecha de Nacimiento", value=None, min_value=datetime(1920, 1, 1), max_value=datetime.now(), format="DD/MM/YYYY")
         nacionalidad = c6.text_input("Nacionalidad", value="ARGENTINA").upper()
         
         domicilio = st.text_input("Domicilio Real").upper()
         telefono = st.text_input("Teléfono")
 
     st.subheader("✍️ Relato de la Denuncia")
-    relato_espontaneo = st.text_area("Ingrese el relato tal como lo cuenta la víctima:", height=150)
+    # CAMPO VACÍO PARA CUALQUER CASO NUEVO
+    relato_espontaneo = st.text_area("Ingrese el relato espontáneo de la víctima:", height=150, placeholder="Escriba aquí lo que manifiesta la persona...")
 
-    if st.button("✨ Procesar para el Acta"):
-        # Relato en voz de la víctima pero prolijo
-        narrativa = (
-            f"QUE EN LA FECHA VENGO A DENUNCIAR UN HECHO DE AMENAZAS QUE SUFRI MIENTRAS LIMPIABA UN TERRENO EN PAYSANDU Y BRANDSEN. "
-            f"ESTE TERRENO ME LO ALQUILO DE PALABRA EL SEÑOR RAMON QUIROGA. "
-            f"MIENTRAS TRABAJABA, UNOS VECINOS EMPEZARON A GRITARME: 'ESTEBAN, NO TE QUEREMOS MAS EN EL BARRIO, VAMOS A JUNTAR FIRMAS PARA SACARTE'. "
-            f"A MI HIJA LE DIJERON QUE SI SE IBA A VIVIR AHI, LA IBAN A PRENDER FUEGO JUNTO CON SU HIJO. "
-            f"LA PERSONA QUE MAS ME AMENAZO ES PATRICIA AGUIRRE (ALIAS PATO). "
-            f"TENGO MUCHO MIEDO POR MI Y POR MI FAMILIA, POR ESO PIDO QUE NO SE NOS ACERQUEN."
-        )
-        st.session_state["victima_out"] = narrativa
+    if st.button("✨ Procesar Relato"):
+        if relato_espontaneo:
+            # Aquí la IA pasaría el texto a MAYÚSCULAS y agregaría la muletilla policial
+            narrativa = f"QUE EN LA FECHA MANIFIESTA QUE: {relato_espontaneo.upper()}"
+            st.session_state["victima_out"] = narrativa
+        else:
+            st.warning("Primero debe ingresar el relato de la víctima.")
 
-    relato_final = st.text_area("Relato Final:", value=st.session_state.get("victima_out", ""), height=150)
+    relato_final = st.text_area("Relato Final para el PDF:", value=st.session_state.get("victima_out", ""), height=150)
 
-    # SECCIÓN DE DESCARGA
     st.markdown("---")
     if st.button("💾 Generar Documento"):
         f_nac_str = fecha_nac.strftime("%d/%m/%Y") if fecha_nac else "S/D"
         pdf_data = generar_pdf_victima_bytes({
             "filiacion": {
                 "nombre": nombre, "dni": dni, "sexo": sexo, "fecha_nac": f_nac_str,
-                "ocupacion": ocupacion,
+                "ocupacion": ocupacion, "domicilio": domicilio, "telefono": telefono
+            },
+            "contenido": relato_final
+        }, interviniente, lugar, hora_hecho)
+        
+        st.download_button(label="📄 DESCARGAR PDF", data=pdf_data, file_name=f"Acta_Victima_{dni}.pdf", mime="application/pdf")
+
+if __name__ == "__main__":
+    main()
